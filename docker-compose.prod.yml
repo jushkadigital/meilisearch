@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  meilisearch:
+    image: getmeili/meilisearch:v1.10
+    container_name: meilisearch
+    expose:
+      - "7700"
+    env_file:
+      - .env
+    volumes:
+      - meili_data:/meili_data
+    restart: unless-stopped
+    networks:
+      - meili-network
+      - red-compartida
+      - proxiable
+
+
+  worker:
+    # Usamos el contexto build para crear tu propia imagen de Bun a partir del Dockerfile
+    build:
+      context: ./my-app
+      dockerfile: Dockerfile
+    container_name: bun_worker
+    depends_on:
+      meilisearch:
+        condition: service_started
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - meili-network
+      - red-compartida
+      - proxiable
+
+
+volumes:
+  meili_data:
+
+networks:
+  proxiable:
+    external: true
+    name: proxiable # Asegúrate de que este nombre coincida exactamente con tu red externa
+  meili-network:
+    driver: bridge
+  red-compartida:
+    external: true      # <--- ¡ESTO ES LO IMPORTANTE!
+    name: red-compartida # Asegura que busque el nombre exacto
+
+

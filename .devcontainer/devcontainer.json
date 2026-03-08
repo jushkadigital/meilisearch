@@ -1,0 +1,51 @@
+{
+  "name": "Bun (CLI Only)",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "worker",
+  // 1. Mantenemos la carpeta destino igual para no romper los volúmenes del compose
+  "workspaceFolder": "/home/node/app",
+  // 2. Mantenemos el usuario 'ubuntu'
+  "remoteUser": "ubuntu",
+  "runServices": [
+    "meilisearch"
+  ],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "username": "ubuntu",
+      "userUid": "1000",
+      "userGid": "1000",
+      "installZsh": true,
+      "upgradePackages": false
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22",
+      "pnpmVersion": "latest"
+    },
+    // CAMBIO 1: Reemplazamos Node por la feature oficial de Bun
+    "ghcr.io/prulloac/devcontainer-features/bun:1": {
+      "version": "latest"
+    },
+    "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
+      "packages": "git,wget,curl,ripgrep,xclip,sudo,iputils-ping,procps"
+    },
+    "ghcr.io/danzilberdan/devcontainers/opencode:0": {},
+    "ghcr.io/s1n7ax/devcontainer-features/neovim:2": {}
+  },
+  "mounts": [
+    {
+      "source": "${localWorkspaceFolder}/.opencode/auth.json",
+      "target": "/mnt/opencode-auth.json",
+      "type": "bind"
+    }
+  ],
+  // 3. CAMBIO 2:
+  // Mantenemos la creación de carpetas y permisos (vital porque quitamos la feature de node que a veces crea ese user).
+  // Cambiamos 'corepack enable && pnpm install' por 'bun install'.
+  "postCreateCommand": "sudo mkdir -p /home/node/app && sudo chown -R ubuntu:ubuntu /home/node && sudo chown ubuntu:ubuntu /mnt/opencode-auth.json && cd my-app && bun install",
+  "forwardPorts": [
+    8888
+  ]
+}

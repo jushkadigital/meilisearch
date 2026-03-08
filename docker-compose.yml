@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  meilisearch:
+    image: getmeili/meilisearch:v1.10 # Se recomienda fijar una versión específica en lugar de 'latest'
+    container_name: meilisearch
+    ports:
+      - "7700:7700" # Mapea el puerto del host al contenedor
+    environment:
+      # --- Configuración Principal ---
+      - MEILI_MASTER_KEY=mi_clave_maestra_segura_de_minimo_16_bytes # ¡Cámbialo! Obligatorio en producción
+      - MEILI_ENV=development # Cambiar a 'production' para despliegues reales (desactiva la interfaz web de prueba)
+      
+      # --- Configuraciones Opcionales ---
+      - MEILI_NO_ANALYTICS=true # Desactiva el envío de estadísticas a Meilisearch
+      - MEILI_MAX_INDEXING_MEMORY=100Mb # Límite de RAM para indexación
+      - MEILI_HTTP_PAYLOAD_SIZE_LIMIT=100Mb # Tamaño máximo de subida (ej. para dumps o batches grandes)
+    volumes:
+      - meili_data:/meili_data # Persistencia de datos en tu disco local
+    restart: unless-stopped
+  worker:
+    image: ubuntu:24.04
+    volumes:
+      - ./my-app:/home/node/app/my-app
+    command: sleep infinity
+    depends_on:
+      meilisearch:
+        condition: service_started
+    environment:
+      # Usamos los nombres de los servicios como hostnames
+      - RABBIT_URL=amqp://admin:admin123@172.17.0.1:5672
+      - MEILI_HOST=http://meilisearch:7700
+      - MEILI_MASTER_KEY=mi_clave_maestra_segura_de_minimo_16_bytes
+    restart: always # Si falla, se reinicia solo
+volumes:
+  meili_data:
