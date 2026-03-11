@@ -15,10 +15,12 @@ services:
       - meili-network
       - red-compartida
       - proxiable
+    cpus: 2.5
+    mem_limit: 3g
+    mem_reservation: 1.5g
 
 
   worker:
-    # Usamos el contexto build para crear tu propia imagen de Bun a partir del Dockerfile
     build:
       context: ./my-app
       dockerfile: Dockerfile
@@ -33,6 +35,9 @@ services:
       - meili-network
       - red-compartida
       - proxiable
+    cpus: 0.5
+    mem_limit: 512m
+    mem_reservation: 256m
 
 
 volumes:
