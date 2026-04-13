@@ -90,7 +90,7 @@ async function processMessage(msg: ConsumeMessage | null, channel: Channel) {
     // --- LOGICA PAYLOAD CMS (Contenido) ---
     if (routingKey.startsWith('tour.')) {
       // Determinar si es 'create', 'update' o 'delete'
-      if (content.action === 'delete') {
+      if (routingKey.endsWith("deleted")) {
         await index.deleteDocument(content.id.toString() + "tour");
         console.log(`🗑️ Eliminado tour: ${content.id}`);
       } else {
@@ -118,7 +118,7 @@ async function processMessage(msg: ConsumeMessage | null, channel: Channel) {
     }
     else if (routingKey.startsWith('package.')) {
       // Determinar si es 'create', 'update' o 'delete'
-      if (content.action === 'delete') {
+      if (routingKey.endsWith("deleted")) {
         await index.deleteDocument(content.id.toString() + "package");
         console.log(`🗑️ Eliminado Package: ${content.id}`);
       } else {
