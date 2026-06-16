@@ -1,4 +1,8 @@
-version: '3.8'
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
 
 services:
   meilisearch:
@@ -13,12 +17,28 @@ services:
     restart: unless-stopped
     networks:
       - meili-network
-      - red-compartida
       - proxiable
-    cpus: 2
-    mem_limit: 3g
-    mem_reservation: 1.5g
-
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=100M
+    logging: *logging
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 3g
+          pids: 100
+        reservations:
+          cpus: '1'
+          memory: 1.5g
 
   worker:
     build:
@@ -27,7 +47,7 @@ services:
     container_name: bun_worker
     depends_on:
       meilisearch:
-        condition: service_started
+        condition: service_healthy
     env_file:
       - .env
     restart: unless-stopped
@@ -35,10 +55,22 @@ services:
       - meili-network
       - red-compartida
       - proxiable
-    cpus: 0.5
-    mem_limit: 512m
-    mem_reservation: 256m
-
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=50M
+      - /home/bun/.cache:size=50M
+    logging: *logging
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 768m
+          pids: 50
+        reservations:
+          cpus: '0.25'
+          memory: 256m
 
 volumes:
   meili_data:
@@ -46,11 +78,11 @@ volumes:
 networks:
   proxiable:
     external: true
-    name: proxiable # Asegúrate de que este nombre coincida exactamente con tu red externa
+    name: proxiable
   meili-network:
     driver: bridge
   red-compartida:
-    external: true      # <--- ¡ESTO ES LO IMPORTANTE!
-    name: red-compartida # Asegura que busque el nombre exacto
+    external: true
+    name: red-compartida
 
 

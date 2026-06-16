@@ -1,6 +1,6 @@
 {
   "name": "my-app",
-  "module": "index.ts",
+  "module": "src/index.ts",
   "type": "module",
   "private": true,
   "devDependencies": {
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "amqplib": "^0.10.9",
-    "meilisearch": "^0.55.0"
+    "meilisearch": "^0.55.0",
+    "zod": "^4.4.3"
   }
 }

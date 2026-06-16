@@ -20,9 +20,26 @@ services:
     restart: unless-stopped
   worker:
     image: ubuntu:24.04
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     volumes:
-      - ./my-app:/home/node/app/my-app
-    command: sleep infinity
+      - ./my-app:/home/ubuntu/app/my-app
+      - opencode-data:/home/ubuntu/.local/share/opencode
+      # OpenCode config persistence (opencode.jsonc, oh-my-openagent.json, plugins)
+      - opencode-config:/home/ubuntu/.config/opencode
+      # OpenCode cache (models, bins - avoids re-downloading ~2MB each time)
+      - opencode-cache:/home/ubuntu/.cache/opencode
+
+    # Init as root: create all dirs that named-volume mounts need as parents,
+    # then chown the entire /home/ubuntu tree so ubuntu (UID 1000) can write everywhere.
+    # This MUST run before features and postCreateCommand.
+    command: >
+      sh -c "
+      mkdir -p /home/ubuntu/.local/share /home/ubuntu/.local/state /home/ubuntu/.config /home/ubuntu/.cache &&
+      chown -R 1000:1000 /home/ubuntu &&
+      exec sleep infinity
+      "
     depends_on:
       meilisearch:
         condition: service_started
@@ -34,3 +51,7 @@ services:
     restart: always # Si falla, se reinicia solo
 volumes:
   meili_data:
+  opencode-data:
+  opencode-config:
+  opencode-cache:
+

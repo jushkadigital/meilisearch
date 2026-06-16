@@ -6,7 +6,7 @@ WORKDIR /app
 
 # 3. Copiamos los archivos de dependencias primero para aprovechar la caché de Docker
 # (Si aún no tienes bun.lockb, Bun lo generará, pero es buena práctica incluirlo)
-COPY package.json bun.lockb* ./
+COPY package.json bun.lock ./
 
 # 4. Instalamos las dependencias de producción
 RUN bun install --frozen-lockfile --production
@@ -18,4 +18,4 @@ COPY . .
 USER bun
 
 # 7. Ejecutamos tu archivo principal
-CMD ["bun", "run", "index.ts"]
+CMD ["bun", "run", "src/index.ts"]

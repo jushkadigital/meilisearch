@@ -364,7 +364,7 @@ async function start() {
       `🚀 Worker sincronizador iniciado. Cola principal: ${queueName}. DLQ: ${DLQ_QUEUE_NAME}. Retries máximos: ${MAX_RETRIES}`,
     );
 
-    channel.prefetch(1);
+    channel.prefetch(10);
     channel.consume(queueName, (msg) => {
       void processMessage(msg, channel);
     });

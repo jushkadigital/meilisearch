@@ -2,9 +2,7 @@
   "name": "Bun (CLI Only)",
   "dockerComposeFile": "../docker-compose.yml",
   "service": "worker",
-  // 1. Mantenemos la carpeta destino igual para no romper los volúmenes del compose
-  "workspaceFolder": "/home/node/app",
-  // 2. Mantenemos el usuario 'ubuntu'
+  "workspaceFolder": "/home/ubuntu/app",
   "remoteUser": "ubuntu",
   "runServices": [
     "meilisearch"
@@ -24,7 +22,6 @@
       "version": "22",
       "pnpmVersion": "latest"
     },
-    // CAMBIO 1: Reemplazamos Node por la feature oficial de Bun
     "ghcr.io/prulloac/devcontainer-features/bun:1": {
       "version": "latest"
     },
@@ -41,10 +38,7 @@
       "type": "bind"
     }
   ],
-  // 3. CAMBIO 2:
-  // Mantenemos la creación de carpetas y permisos (vital porque quitamos la feature de node que a veces crea ese user).
-  // Cambiamos 'corepack enable && pnpm install' por 'bun install'.
-  "postCreateCommand": "sudo mkdir -p /home/node/app && sudo chown -R ubuntu:ubuntu /home/node && sudo chown ubuntu:ubuntu /mnt/opencode-auth.json && cd my-app && bun install",
+  "postCreateCommand": "sudo chown -R ubuntu:ubuntu /home/ubuntu && sudo chown ubuntu:ubuntu /mnt/opencode-auth.json && cd my-app && bun install",
   "forwardPorts": [
     8888
   ]
