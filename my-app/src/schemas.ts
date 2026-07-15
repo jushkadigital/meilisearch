@@ -126,12 +126,12 @@ export const EventEnvelopeSchema = z.object({
 
 // ── Payload resolver by eventType ───────────────────────────────────────
 const PAYLOAD_SCHEMAS: Record<string, z.ZodType> = {
-  'tour.published': TourPublishedV1PayloadSchema,
-  'tour.updated': TourUpdatedV1PayloadSchema,
-  'tour.deleted': TourDeletedV1PayloadSchema,
-  'package.published': PackagePublishedV1PayloadSchema,
-  'package.updated': PackageUpdatedV1PayloadSchema,
-  'package.deleted': PackageDeletedV1PayloadSchema,
+  'integration.tour.published.v1': TourPublishedV1PayloadSchema,
+  'integration.tour.updated.v1': TourUpdatedV1PayloadSchema,
+  'integration.tour.deleted.v1': TourDeletedV1PayloadSchema,
+  'integration.package.published.v1': PackagePublishedV1PayloadSchema,
+  'integration.package.updated.v1': PackageUpdatedV1PayloadSchema,
+  'integration.package.deleted.v1': PackageDeletedV1PayloadSchema,
 };
 
 export function getPayloadSchema(eventType: string): z.ZodType | undefined {

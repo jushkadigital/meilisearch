@@ -2,7 +2,7 @@ import type { EventMetadata, ProductEventPayload, ProductMeiliDocument } from '.
 import { upsertProductDocument } from '../services/meilisearch.js';
 import { logger } from '../logger.js';
 
-export async function handleProductUpdated(
+export async function handleProductSynced(
   payload: ProductEventPayload,
   metadata: EventMetadata,
 ): Promise<void> {
@@ -44,4 +44,11 @@ export async function handleProductUpdated(
   };
 
   await upsertProductDocument(doc);
+}
+
+export async function handleProductUpdated(
+  payload: ProductEventPayload,
+  metadata: EventMetadata,
+): Promise<void> {
+  await handleProductSynced(payload, metadata);
 }
