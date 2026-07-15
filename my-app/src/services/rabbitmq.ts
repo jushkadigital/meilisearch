@@ -16,7 +16,7 @@ const DLQ_QUEUE_NAME = `${INDEXER_QUEUE_NAME}.dlq`;
 const DEAD_LETTER_EXCHANGE_NAME = `${INDEXER_QUEUE_NAME}.dlx`;
 const RETRY_EXCHANGE_NAME = `${INDEXER_QUEUE_NAME}.retry`;
 
-const ROUTING_PATTERNS = ['integration.tour.*', 'integration.package.*', 'integration.product.*'] as const;
+const ROUTING_PATTERNS = ['integration.tour.#', 'integration.package.#', 'integration.product.#'] as const;
 
 const RETRY_DELAYS = [5_000, 30_000, 120_000]; // 5s, 30s, 2min
 
