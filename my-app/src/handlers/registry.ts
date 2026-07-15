@@ -18,18 +18,18 @@ interface HandlerRoute {
 
 const routes: HandlerRoute[] = [
   // Tour events
-  { eventType: 'integration.tour.published.v1', handler: handleTourPublished as EventHandler },
-  { eventType: 'integration.tour.updated.v1', handler: handleTourUpdated as EventHandler },
-  { eventType: 'integration.tour.deleted.v1', handler: handleTourDeleted as EventHandler },
+  { eventType: 'tour.published', handler: handleTourPublished as EventHandler },
+  { eventType: 'tour.updated', handler: handleTourUpdated as EventHandler },
+  { eventType: 'tour.deleted', handler: handleTourDeleted as EventHandler },
 
   // Package events
-  { eventType: 'integration.package.published.v1', handler: handlePackagePublished as EventHandler },
-  { eventType: 'integration.package.updated.v1', handler: handlePackageUpdated as EventHandler },
-  { eventType: 'integration.package.deleted.v1', handler: handlePackageDeleted as EventHandler },
+  { eventType: 'package.published', handler: handlePackagePublished as EventHandler },
+  { eventType: 'package.updated', handler: handlePackageUpdated as EventHandler },
+  { eventType: 'package.deleted', handler: handlePackageDeleted as EventHandler },
 
   // Product events
-  { eventType: 'integration.product.synced.v1', handler: handleProductSynced as EventHandler },
-  { eventType: 'integration.product.updated.v1', handler: handleProductUpdated as EventHandler },
+  { eventType: 'product.synced', handler: handleProductSynced as EventHandler },
+  { eventType: 'product.updated', handler: handleProductUpdated as EventHandler },
 ];
 
 function findHandler(eventType: string): EventHandler | undefined {

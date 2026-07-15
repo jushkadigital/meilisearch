@@ -10,7 +10,7 @@ import type { EventMetadata, RetryConfig } from '../types.js';
 
 // ── Configuration ──────────────────────────────────────────────────────
 const RABBIT_URL = process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672';
-const EXCHANGE_NAME = process.env.RABBITMQ_EXCHANGE || 'tourism.integracion';
+const EXCHANGE_NAME = process.env.RABBITMQ_EXCHANGE || 'tourism.integration';
 const INDEXER_QUEUE_NAME = process.env.RABBITMQ_QUEUE_NAME || 'indexer';
 const DLQ_QUEUE_NAME = `${INDEXER_QUEUE_NAME}.dlq`;
 const DEAD_LETTER_EXCHANGE_NAME = `${INDEXER_QUEUE_NAME}.dlx`;
