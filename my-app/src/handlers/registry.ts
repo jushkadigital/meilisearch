@@ -27,8 +27,9 @@ const routes: HandlerRoute[] = [
   { eventType: 'package.updated', handler: handlePackageUpdated as EventHandler },
   { eventType: 'package.deleted', handler: handlePackageDeleted as EventHandler },
 
-  // Product events (from medusa.events exchange)
-  { eventType: 'medusa.product.created', handler: handleProductSynced as EventHandler },
+  // Product events
+  { eventType: 'product.synced', handler: handleProductSynced as EventHandler },
+  { eventType: 'product.updated', handler: handleProductUpdated as EventHandler },
 ];
 
 function findHandler(eventType: string): EventHandler | undefined {

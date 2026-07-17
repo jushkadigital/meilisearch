@@ -11,14 +11,12 @@ import type { EventMetadata, RetryConfig } from '../types.js';
 // ── Configuration ──────────────────────────────────────────────────────
 const RABBIT_URL = process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672';
 const EXCHANGE_NAME = process.env.RABBITMQ_EXCHANGE || 'tourism.integration';
-const MEDUSA_EXCHANGE_NAME = process.env.RABBITMQ_MEDUSA_EXCHANGE || 'medusa.events';
 const INDEXER_QUEUE_NAME = process.env.RABBITMQ_QUEUE_NAME || 'indexer';
 const DLQ_QUEUE_NAME = `${INDEXER_QUEUE_NAME}.dlq`;
 const DEAD_LETTER_EXCHANGE_NAME = `${INDEXER_QUEUE_NAME}.dlx`;
 const RETRY_EXCHANGE_NAME = `${INDEXER_QUEUE_NAME}.retry`;
 
-const ROUTING_PATTERNS = ['integration.tour.#', 'integration.package.#'] as const;
-const MEDUSA_ROUTING_PATTERNS = ['medusa.product.created'] as const;
+const ROUTING_PATTERNS = ['integration.tour.#', 'integration.package.#', 'integration.product.#'] as const;
 
 const RETRY_DELAYS = [5_000, 30_000, 120_000]; // 5s, 30s, 2min
 
@@ -208,11 +206,8 @@ export async function connectRabbitMQ(): Promise<RabbitConnection> {
 
 // ── Topology Setup ─────────────────────────────────────────────────────
 export async function setupQueueTopology(channel: Channel): Promise<string> {
-  // Main exchange (topic) — tours, packages
+  // Main exchange (topic) — tours, packages, products
   await channel.assertExchange(EXCHANGE_NAME, 'topic', { durable: true });
-
-  // Medusa exchange (topic) — products
-  await channel.assertExchange(MEDUSA_EXCHANGE_NAME, 'topic', { durable: true });
 
   // DLQ exchange (topic) — receives messages after max retries
   await channel.assertExchange(DEAD_LETTER_EXCHANGE_NAME, 'topic', { durable: true });
@@ -249,21 +244,16 @@ export async function setupQueueTopology(channel: Channel): Promise<string> {
     deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
   });
 
-  // Bind main queue to tourism.integration exchange (tours, packages)
+  // Bind main queue to exchange with routing patterns
   for (const pattern of ROUTING_PATTERNS) {
     await channel.bindQueue(queue.queue, EXCHANGE_NAME, pattern);
   }
 
-  // Bind main queue to medusa.events exchange (products)
-  for (const pattern of MEDUSA_ROUTING_PATTERNS) {
-    await channel.bindQueue(queue.queue, MEDUSA_EXCHANGE_NAME, pattern);
-  }
-
   logger.info('Queue topology configured', {
     mainQueue: queue.queue,
-    exchanges: [EXCHANGE_NAME, MEDUSA_EXCHANGE_NAME],
+    exchange: EXCHANGE_NAME,
     dlq: DLQ_QUEUE_NAME,
-    patterns: [...ROUTING_PATTERNS, ...MEDUSA_ROUTING_PATTERNS],
+    patterns: [...ROUTING_PATTERNS],
     maxRetries: MAX_RETRIES,
     retryDelays: RETRY_DELAYS.slice(0, MAX_RETRIES),
   });
@@ -290,6 +280,5 @@ export {
   DLQ_QUEUE_NAME,
   EXCHANGE_NAME,
   INDEXER_QUEUE_NAME,
-  MEDUSA_EXCHANGE_NAME,
   ROUTING_PATTERNS,
 };
