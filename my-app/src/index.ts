@@ -1,6 +1,6 @@
 import type { ConsumeMessage } from 'amqplib';
 import type { EventEnvelope, EventMetadata } from './types.js';
-import { EventEnvelopeSchema, getPayloadSchema } from './schemas.js';
+import { EventEnvelopeSchema, MedusaEnvelopeSchema, normalizeMedusaEnvelope, getPayloadSchema } from './schemas.js';
 import { logger } from './logger.js';
 import { isDuplicate, markProcessed, startIdempotencyCleanup, stopIdempotencyCleanup } from './idempotency.js';
 import { connectRabbitMQ, setupQueueTopology, handleProcessingFailure, gracefulShutdown, retryConfig } from './services/rabbitmq.js';
@@ -52,14 +52,22 @@ function parseMessageContent(raw: Buffer): unknown {
 }
 
 function validateEnvelope(raw: unknown): EventEnvelope {
+  // Try our format first
   const result = EventEnvelopeSchema.safeParse(raw);
-  if (!result.success) {
-    throw new EnvelopeValidationError(
-      'Event envelope validation failed',
-      result.error,
-    );
+  if (result.success) {
+    return result.data;
   }
-  return result.data;
+
+  // Try Medusa format and normalize
+  const medusaResult = MedusaEnvelopeSchema.safeParse(raw);
+  if (medusaResult.success) {
+    return normalizeMedusaEnvelope(medusaResult.data);
+  }
+
+  throw new EnvelopeValidationError(
+    'Event envelope validation failed',
+    result.error,
+  );
 }
 
 function validatePayload(payload: unknown, eventType: string): unknown {

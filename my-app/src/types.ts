@@ -1,7 +1,7 @@
 // ── Event Envelope ─────────────────────────────────────────────────────
 export const ENVELOPE_SPEC = 'tourism-events/v1' as const;
 
-export type AggregateType = 'tour' | 'package' | 'user' | 'media' | 'page';
+export type AggregateType = 'tour' | 'package' | 'user' | 'media' | 'page' | 'product';
 export type Producer = 'catalog' | 'identity' | 'user-service' | 'capacity-service';
 
 export interface EventMetadata {

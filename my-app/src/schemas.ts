@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ENVELOPE_SPEC } from './types.js';
+import type { EventMetadata } from './types.js';
 
 // ── Shared Sub-schemas ─────────────────────────────────────────────────
 export const MeiliThumbnailSchema = z.object({
@@ -106,7 +107,7 @@ export const EventMetadataSchema = z.object({
   eventType: z.string(),
   eventVersion: z.number().int().min(1),
   aggregateId: z.string(),
-  aggregateType: z.enum(['tour', 'package', 'user', 'media', 'page']),
+  aggregateType: z.enum(['tour', 'package', 'user', 'media', 'page', 'product']),
   correlationId: z.string().uuid(),
   causationId: z.string().nullable(),
   traceId: z.string(),
@@ -123,6 +124,64 @@ export const EventEnvelopeSchema = z.object({
   metadata: EventMetadataSchema,
   payload: z.unknown(),
 });
+
+// ── Medusa Envelope Schema (alternative format) ────────────────────────
+export const MedusaEnvelopeSchema = z.object({
+  spec: z.literal(ENVELOPE_SPEC),
+  id: z.string().uuid(),
+  type: z.string(),
+  aggregateType: z.string(),
+  action: z.string(),
+  version: z.number(),
+  timestamp: z.string().datetime(),
+  source: z.string(),
+  metadata: z
+    .object({
+      correlationId: z.string().uuid(),
+      causationId: z.string().optional(),
+      traceContext: z
+        .object({
+          traceparent: z.string(),
+        })
+        .optional(),
+    })
+    .optional(),
+  payload: z.unknown(),
+});
+
+type MedusaEnvelope = z.infer<typeof MedusaEnvelopeSchema>;
+
+function parseTraceParent(traceparent: string): { traceId: string; spanId: string } {
+  const parts = traceparent.split('-');
+  return {
+    traceId: parts[1] ?? '',
+    spanId: parts[2] ?? '',
+  };
+}
+
+export function normalizeMedusaEnvelope(raw: MedusaEnvelope) {
+  const { traceId, spanId } = raw.metadata?.traceContext?.traceparent
+    ? parseTraceParent(raw.metadata.traceContext.traceparent)
+    : { traceId: '', spanId: '' };
+
+  return {
+    spec: raw.spec,
+    metadata: {
+      eventId: raw.id,
+      eventType: raw.action,
+      eventVersion: raw.version,
+      aggregateId: raw.id,
+      aggregateType: raw.aggregateType as EventMetadata['aggregateType'],
+      correlationId: raw.metadata?.correlationId ?? raw.id,
+      causationId: raw.metadata?.causationId ?? null,
+      traceId,
+      spanId,
+      producer: raw.source as EventMetadata['producer'],
+      occurredAt: raw.timestamp,
+    },
+    payload: raw.payload,
+  };
+}
 
 // ── Payload resolver by eventType ───────────────────────────────────────
 const PAYLOAD_SCHEMAS: Record<string, z.ZodType> = {
