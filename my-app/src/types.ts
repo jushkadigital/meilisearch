@@ -106,6 +106,7 @@ export interface ProductData {
   id: string;
   external_id?: string;
   variants?: Array<{
+    title?: string;
     prices?: Array<{ currency_code: string; amount: number }>;
     price_set?: { prices: Array<{ currency_code: string; amount: number }> };
   }>;

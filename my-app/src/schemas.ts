@@ -119,38 +119,6 @@ export const EventMetadataSchema = z.object({
 });
 
 // ── Event Envelope Schema ──────────────────────────────────────────────
-export const EventEnvelopeSchema = z.object({
-  spec: z.literal(ENVELOPE_SPEC),
-  metadata: EventMetadataSchema,
-  payload: z.unknown(),
-});
-
-// ── Medusa Envelope Schema (alternative format) ────────────────────────
-export const MedusaEnvelopeSchema = z.object({
-  spec: z.literal(ENVELOPE_SPEC),
-  id: z.string().uuid(),
-  type: z.string(),
-  aggregateType: z.string(),
-  action: z.string(),
-  version: z.number(),
-  timestamp: z.string().datetime(),
-  source: z.string(),
-  metadata: z
-    .object({
-      correlationId: z.string().uuid(),
-      causationId: z.string().optional(),
-      traceContext: z
-        .object({
-          traceparent: z.string(),
-        })
-        .optional(),
-    })
-    .optional(),
-  payload: z.unknown(),
-});
-
-type MedusaEnvelope = z.infer<typeof MedusaEnvelopeSchema>;
-
 function parseTraceParent(traceparent: string): { traceId: string; spanId: string } {
   const parts = traceparent.split('-');
   return {
@@ -159,29 +127,43 @@ function parseTraceParent(traceparent: string): { traceId: string; spanId: strin
   };
 }
 
-export function normalizeMedusaEnvelope(raw: MedusaEnvelope) {
-  const { traceId, spanId } = raw.metadata?.traceContext?.traceparent
-    ? parseTraceParent(raw.metadata.traceContext.traceparent)
-    : { traceId: '', spanId: '' };
+export const EventEnvelopeSchema = z.preprocess(
+  (raw) => {
+    const obj = raw as Record<string, unknown>;
+    // Medusa format: has 'id' and 'action' at root level
+    if (typeof obj.id === 'string' && typeof obj.action === 'string') {
+      const metadata = (obj.metadata as Record<string, unknown>) ?? {};
+      const traceContext = (metadata.traceContext as Record<string, unknown>) ?? {};
+      const traceparent = typeof traceContext.traceparent === 'string' ? traceContext.traceparent : '';
+      const { traceId, spanId } = traceparent ? parseTraceParent(traceparent) : { traceId: '', spanId: '' };
 
-  return {
-    spec: raw.spec,
-    metadata: {
-      eventId: raw.id,
-      eventType: raw.action,
-      eventVersion: raw.version,
-      aggregateId: raw.id,
-      aggregateType: raw.aggregateType as EventMetadata['aggregateType'],
-      correlationId: raw.metadata?.correlationId ?? raw.id,
-      causationId: raw.metadata?.causationId ?? null,
-      traceId,
-      spanId,
-      producer: raw.source as EventMetadata['producer'],
-      occurredAt: raw.timestamp,
-    },
-    payload: raw.payload,
-  };
-}
+      return {
+        spec: obj.spec,
+        metadata: {
+          eventId: obj.id,
+          eventType: obj.action,
+          eventVersion: obj.version ?? 1,
+          aggregateId: obj.id,
+          aggregateType: obj.aggregateType,
+          correlationId: metadata.correlationId ?? obj.id,
+          causationId: metadata.causationId ?? null,
+          traceId,
+          spanId,
+          producer: obj.source ?? 'catalog',
+          occurredAt: obj.timestamp ?? new Date().toISOString(),
+        },
+        payload: obj.payload,
+      };
+    }
+    // Our format: has 'metadata' with 'eventId'
+    return raw;
+  },
+  z.object({
+    spec: z.literal(ENVELOPE_SPEC),
+    metadata: EventMetadataSchema,
+    payload: z.unknown(),
+  }),
+);
 
 // ── Payload resolver by eventType ───────────────────────────────────────
 const PAYLOAD_SCHEMAS: Record<string, z.ZodType> = {

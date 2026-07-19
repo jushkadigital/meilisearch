@@ -1,5 +1,5 @@
-import type { EventMetadata, ProductEventPayload, ProductMeiliDocument } from '../types.js';
-import { upsertProductDocument } from '../services/meilisearch.js';
+import type { EventMetadata, ProductEventPayload } from '../types.js';
+import { getIndex } from '../services/meilisearch.js';
 import { logger } from '../logger.js';
 
 export async function handleProductSynced(
@@ -13,37 +13,26 @@ export async function handleProductSynced(
     return;
   }
 
-  let maxPrice = 0;
-  const currency = 'PEN';
+  let price = 0;
 
   if (payload.data.variants && Array.isArray(payload.data.variants)) {
-    const allPrices: number[] = [];
+    const adultVariant = payload.data.variants.find(
+      (v) => v.title?.toLowerCase() === 'adult',
+    );
 
-    for (const variant of payload.data.variants) {
-      const pricesArray = variant.prices ?? variant.price_set?.prices ?? [];
-      const priceObj = pricesArray.find(
-        (p) => p.currency_code === 'pen' || p.currency_code === 'PEN',
-      );
+    if (adultVariant) {
+      const pricesArray = adultVariant.prices ?? adultVariant.price_set?.prices ?? [];
+      const amounts = pricesArray.map((p) => p.amount).filter((a) => a > 0);
 
-      if (priceObj) {
-        allPrices.push(priceObj.amount);
+      if (amounts.length > 0) {
+        price = Math.max(...amounts);
       }
-    }
-
-    if (allPrices.length > 0) {
-      maxPrice = Math.max(...allPrices);
     }
   }
 
-  const doc: ProductMeiliDocument = {
-    id: sharedId,
-    price: maxPrice,
-    currency,
-    medusa_id: payload.data.id,
-    _updated_at_medusa: new Date().toISOString(),
-  };
-
-  await upsertProductDocument(doc);
+  const index = getIndex();
+  await index.updateDocuments([{ id: sharedId, price }]);
+  logger.info('Product price updated', { docId: sharedId, price }, metadata);
 }
 
 export async function handleProductUpdated(
