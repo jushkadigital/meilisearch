@@ -6,6 +6,7 @@ export async function handleProductSynced(
   payload: ProductEventPayload,
   metadata: EventMetadata,
 ): Promise<void> {
+  logger.info('Product raw payload', { payload: JSON.stringify(payload) }, metadata);
   const sharedId = payload.data.external_id;
 
   if (!sharedId) {
