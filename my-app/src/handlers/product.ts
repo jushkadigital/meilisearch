@@ -2,15 +2,30 @@ import type { EventMetadata, ProductEventPayload } from '../types.js';
 import { getIndex } from '../services/meilisearch.js';
 import { logger } from '../logger.js';
 
+function parseExternalId(externalId: string): { aggregateId: string; type: 'tour' | 'package' } | null {
+  const match = externalId.match(/^(\d+)(tour|package)$/);
+  if (!match || !match[1] || !match[2]) return null;
+  return { aggregateId: match[1], type: match[2] as 'tour' | 'package' };
+}
+
+function buildDocumentId(aggregateId: string, type: 'tour' | 'package'): string {
+  return `${aggregateId}-${type}`;
+}
+
 export async function handleProductSynced(
   payload: ProductEventPayload,
   metadata: EventMetadata,
 ): Promise<void> {
-  logger.info('Product raw payload', { payload: JSON.stringify(payload) }, metadata);
-  const sharedId = payload.data.external_id;
+  const externalId = payload.data.external_id;
 
-  if (!sharedId) {
+  if (!externalId) {
     logger.warn('Product ignored — missing external_id', { medusaId: payload.data.id }, metadata);
+    return;
+  }
+
+  const parsed = parseExternalId(externalId);
+  if (!parsed) {
+    logger.warn('Product ignored — invalid external_id format', { externalId }, metadata);
     return;
   }
 
@@ -31,9 +46,10 @@ export async function handleProductSynced(
     }
   }
 
+  const docId = buildDocumentId(parsed.aggregateId, parsed.type);
   const index = getIndex();
-  await index.updateDocuments([{ id: sharedId, price }]);
-  logger.info('Product price updated', { docId: sharedId, price }, metadata);
+  await index.updateDocuments([{ id: docId, price }]);
+  logger.info('Product price updated', { docId, price }, metadata);
 }
 
 export async function handleProductUpdated(
