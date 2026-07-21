@@ -112,7 +112,7 @@ export const EventMetadataSchema = z.object({
   causationId: z.string().nullable(),
   traceId: z.string(),
   spanId: z.string(),
-  producer: z.enum(['catalog', 'identity', 'user-service', 'capacity-service']),
+  producer: z.enum(['catalog', 'identity', 'user-service', 'capacity-service', 'medusa-backend']),
   occurredAt: z.string().datetime(),
   actorId: z.string().nullable().optional(),
   tenantId: z.string().nullable().optional(),

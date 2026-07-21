@@ -2,7 +2,7 @@
 export const ENVELOPE_SPEC = 'tourism-events/v1' as const;
 
 export type AggregateType = 'tour' | 'package' | 'user' | 'media' | 'page' | 'product';
-export type Producer = 'catalog' | 'identity' | 'user-service' | 'capacity-service';
+export type Producer = 'catalog' | 'identity' | 'user-service' | 'capacity-service' | 'medusa-backend';
 
 export interface EventMetadata {
   eventId: string;
