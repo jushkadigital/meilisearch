@@ -141,7 +141,7 @@ export const EventEnvelopeSchema = z.preprocess(
         spec: obj.spec,
         metadata: {
           eventId: obj.id,
-          eventType: obj.action,
+          eventType: `${obj.aggregateType}.${obj.action}`,
           eventVersion: obj.version ?? 1,
           aggregateId: obj.id,
           aggregateType: obj.aggregateType,
