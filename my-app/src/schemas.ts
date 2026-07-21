@@ -152,7 +152,7 @@ export const EventEnvelopeSchema = z.preprocess(
           producer: obj.source ?? 'catalog',
           occurredAt: obj.timestamp ?? new Date().toISOString(),
         },
-        payload: obj.payload,
+        payload: { data: obj.payload },
       };
     }
     // Our format: has 'metadata' with 'eventId'
